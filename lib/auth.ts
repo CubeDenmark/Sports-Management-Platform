@@ -51,7 +51,7 @@ export async function getCurrentUser() {
 
   const result = rows[0]
   if (!result || !result.user.isActive) return null
-  return { id: result.user.id, username: result.user.username, displayName: result.user.displayName }
+  return { id: result.user.id, username: result.user.username, displayName: result.user.displayName, role: result.user.role }
 }
 
 export async function requireAuthenticatedUser() {
