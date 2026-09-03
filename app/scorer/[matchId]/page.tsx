@@ -7,6 +7,6 @@ export default async function ScorerMatchPage({ params }: { params: Promise<{ ma
   try {
     const data = await getBasketballState(matchId)
     if (!data.match) notFound()
-    return <ScorerConsole matchId={matchId} initialState={data} />
+    return <ScorerConsole matchId={matchId} sport={data.sport as 'basketball' | 'volleyball' | 'badminton'} initialState={data} />
   } catch { notFound() }
 }

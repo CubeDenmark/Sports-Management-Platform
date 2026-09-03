@@ -8,7 +8,7 @@ import { db } from '@/lib/db'
 import { matchScorers, matches, matchStates } from '@/lib/db/schema'
 import { appendScoreAction, getScoringState, undoScoreAction } from '@/lib/services/scoring'
 
-const scoreInput = z.object({ matchId: z.string().uuid(), participantKey: z.enum(['HOME', 'AWAY']), points: z.union([z.literal(1), z.literal(2), z.literal(3)]), period: z.number().int().min(1).max(4), clientEventId: z.string().min(8).max(120) })
+const scoreInput = z.object({ matchId: z.string().uuid(), participantKey: z.enum(['HOME', 'AWAY']), points: z.number().int().min(1).max(3), period: z.number().int().min(1).max(9), clientEventId: z.string().min(8).max(120), sport: z.enum(['basketball', 'volleyball', 'badminton']).default('basketball') })
 
 async function requireAssigned(matchId: string) {
   const user = await requireUser()
@@ -19,14 +19,16 @@ async function requireAssigned(matchId: string) {
 
 export async function getBasketballState(matchId: string) { const user = await requireAssigned(matchId); return getScoringState(matchId, user.id) }
 
-export async function postBasketballScore(input: unknown) {
+export async function postSportScore(input: unknown) {
   const data = scoreInput.parse(input)
   const user = await requireAssigned(data.matchId)
   const [match] = await db.select({ eventId: matches.eventId }).from(matches).where(eq(matches.id, data.matchId)).limit(1)
   if (!match) throw new Error('Match not found')
-  await appendScoreAction({ matchId: data.matchId, userId: user.id, clientEventId: data.clientEventId, participantKey: data.participantKey, points: data.points, period: data.period as 1 | 2 | 3 | 4 })
+  await appendScoreAction({ matchId: data.matchId, userId: user.id, clientEventId: data.clientEventId, participantKey: data.participantKey, points: data.points, period: data.period, sport: data.sport })
   revalidatePath(`/events/${match.eventId}/matches/${data.matchId}`); revalidatePath(`/scorer/${data.matchId}`)
 }
+
+export async function postBasketballScore(input: unknown) { return postSportScore({ ...(input as Record<string, unknown>), sport: 'basketball' }) }
 
 export async function setBasketballStatus(matchId: string, status: 'LIVE' | 'PAUSED' | 'COMPLETED') {
   const user = await requireAssigned(matchId)
