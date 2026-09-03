@@ -1,0 +1,15 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+import { postBasketballScore, setBasketballStatus, undoLastBasketballScore } from '@/app/scorer/actions'
+
+type Props = { matchId: string; initialState: { match: { id: string }; state?: { homeScore: number; awayScore: number; currentPeriod: number; matchStatus: string }; participants: Array<{ participantKey: string; teamId: string | null }>; events: Array<{ id: string }> } }
+
+export function ScorerConsole({ matchId, initialState }: Props) {
+  const [state, setState] = useState(initialState.state ?? { homeScore: 0, awayScore: 0, currentPeriod: 1, matchStatus: 'READY' })
+  const [pending, startTransition] = useTransition()
+  const score = (participantKey: 'HOME' | 'AWAY', points: 1 | 2 | 3) => startTransition(async () => { await postBasketballScore({ matchId, participantKey, points, period: state.currentPeriod, clientEventId: crypto.randomUUID() }); setState((current) => ({ ...current, [`${participantKey.toLowerCase()}Score`]: current[`${participantKey.toLowerCase()}Score` as 'homeScore' | 'awayScore'] + points, matchStatus: 'LIVE' })) })
+  return <main className="min-h-screen bg-background px-4 py-8 text-foreground"><div className="mx-auto max-w-3xl"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Basketball scorer</p><div className="mt-5 grid grid-cols-2 gap-3"><ScoreCard label="Home" score={state.homeScore} onScore={(points) => score('HOME', points)} /><ScoreCard label="Away" score={state.awayScore} onScore={(points) => score('AWAY', points)} /></div><div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"><span>Quarter {state.currentPeriod} · {state.matchStatus}</span><div className="flex gap-2">{[1, 2, 3, 4].map((period) => <button className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" key={period} onClick={() => setState((current) => ({ ...current, currentPeriod: period }))}>Q{period}</button>)}<button className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" disabled={pending} onClick={() => startTransition(() => undoLastBasketballScore(matchId))}>Undo</button><button className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" disabled={pending} onClick={() => startTransition(() => setBasketballStatus(matchId, state.matchStatus === 'LIVE' ? 'PAUSED' : 'LIVE'))}>{state.matchStatus === 'LIVE' ? 'Pause' : 'Start'}</button></div></div></div></main>
+}
+
+function ScoreCard({ label, score, onScore }: { label: string; score: number; onScore: (points: 1 | 2 | 3) => void }) { return <section className="rounded-xl border border-border bg-card p-5 text-center"><p className="text-sm text-muted-foreground">{label}</p><p className="my-4 text-6xl font-semibold tabular-nums">{score}</p><div className="grid grid-cols-3 gap-2">{([1, 2, 3] as const).map((points) => <button className="rounded-lg border border-border py-3 font-semibold hover:bg-muted" key={points} onClick={() => onScore(points)}>+{points}</button>)}</div></section> }
