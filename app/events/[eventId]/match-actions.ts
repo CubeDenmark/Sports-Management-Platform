@@ -26,7 +26,8 @@ export async function createMatch(eventId: string, input: unknown) {
 
 export async function assignScorer(eventId: string, matchId: string, userId: string) {
   const admin = await requireEventAdmin(eventId)
-  const [match] = await db.select({ id: matches.id }).from(matches).where(and(eq(matches.id, matchId), eq(matches.eventId, eventId))).limit(1)
+  const parsedIds = z.object({ eventId: z.string().uuid(), matchId: z.string().uuid(), userId: z.string().uuid() }).parse({ eventId, matchId, userId })
+  const [match] = await db.select({ id: matches.id }).from(matches).where(and(eq(matches.id, parsedIds.matchId), eq(matches.eventId, parsedIds.eventId))).limit(1)
   const [scorer] = await db.select({ id: users.id }).from(users).innerJoin(eventMembers, eq(eventMembers.userId, users.id)).where(and(eq(users.id, userId), eq(eventMembers.eventId, eventId), eq(eventMembers.role, 'SCORER'))).limit(1)
   if (!match || !scorer) throw new Error('Match or eligible scorer not found')
   await db.insert(matchScorers).values({ matchId, userId, assignedBy: admin.id, status: 'ACTIVE' }).onConflictDoUpdate({ target: [matchScorers.matchId, matchScorers.userId], set: { status: 'ACTIVE', assignedBy: admin.id } })

@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
 import { eventMembers, events } from '@/lib/db/schema'
@@ -19,13 +19,13 @@ export async function requireSuperAdmin() {
 export async function requireEventAdmin(eventId: string) {
   const user = await requireUser()
   if (user.role === 'SUPER_ADMIN') return user
-  const rows = await db.select({ id: events.id }).from(events).where(and(eq(events.id, eventId), eq(events.createdBy, user.id))).limit(1)
+  const rows = await db.select({ id: events.id }).from(events).leftJoin(eventMembers, eq(eventMembers.eventId, events.id)).where(and(eq(events.id, eventId), sql`(${events.createdBy} = ${user.id} OR (${eventMembers.userId} = ${user.id} AND ${eventMembers.role} = 'EVENT_ADMIN'))`)).limit(1)
   if (!rows[0]) redirect('/')
   return user
 }
 
 export async function canManageEvent(eventId: string, userId: string) {
-  const rows = await db.select({ id: events.id }).from(events).leftJoin(eventMembers, eq(eventMembers.eventId, events.id)).where(and(eq(events.id, eventId), eq(events.createdBy, userId))).limit(1)
+  const rows = await db.select({ id: events.id }).from(events).leftJoin(eventMembers, eq(eventMembers.eventId, events.id)).where(and(eq(events.id, eventId), sql`(${events.createdBy} = ${userId} OR (${eventMembers.userId} = ${userId} AND ${eventMembers.role} = 'EVENT_ADMIN'))`)).limit(1)
   return Boolean(rows[0])
 }
 
