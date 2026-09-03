@@ -24,7 +24,7 @@ export default async function AdminPage() {
               <p className="text-sm text-muted-foreground">{events.length} events created by your account.</p>
             </div>
           </div>
-          {events.length ? <ul className="flex flex-col divide-y divide-border">{events.map(({ event }) => <li className="flex items-center justify-between gap-4 py-4" key={event.id}><div><p className="font-medium">{event.name}</p><p className="text-sm text-muted-foreground">{event.status} · {event.location ?? 'Location TBD'}</p></div><span className="text-sm text-muted-foreground">{event.slug}</span></li>)}</ul> : <p className="py-8 text-sm text-muted-foreground">No events yet. Event creation will be added in the next admin slice.</p>}
+          {events.length ? <ul className="flex flex-col divide-y divide-border">{events.map(({ event }) => <li className="flex items-center justify-between gap-4 py-4" key={event.id}><div><p className="font-medium">{event.name}</p><p className="text-sm text-muted-foreground">{event.status} · {event.location ?? 'Location TBD'}</p></div><div className="flex items-center gap-4"><span className="text-sm text-muted-foreground">{event.slug}</span><Link className="rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted" href={`/events/${event.id}`}>Configure</Link></div></li>)}</ul> : <p className="py-8 text-sm text-muted-foreground">No events yet. Event creation will be added in the next admin slice.</p>}
         </section>
       </div>
     </main>
