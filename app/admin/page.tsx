@@ -16,7 +16,7 @@ export default async function AdminPage() {
             <h1 className="text-3xl font-semibold tracking-tight">Platform operations</h1>
             <p className="text-muted-foreground">Manage events and access boundaries from one secure workspace.</p>
           </div>
-          <Link className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted" href="/">Back to workspace</Link>
+          <div className="flex gap-3"><Link className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted" href="/admin/users">People & scorers</Link><Link className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted" href="/">Back to workspace</Link></div>
         </header>
         <section className="rounded-xl border border-border bg-card p-6">
           <div className="flex flex-col gap-4 border-b border-border pb-4">
