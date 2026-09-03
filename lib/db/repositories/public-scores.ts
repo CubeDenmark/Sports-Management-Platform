@@ -22,7 +22,7 @@ export async function getPublicMatch(eventId: string, matchId: string) {
   return rows
 }
 
-export async function listPublicTeams(eventId: string) { return db.select().from(teams).where(and(eq(teams.eventId, eventId), eq(teams.status, 'ACTIVE'))).orderBy(asc(teams.name)) }
+export async function listPublicTeams(eventId: string) { return db.select().from(teams).where(eq(teams.eventId, eventId)).orderBy(asc(teams.name)) }
 export async function listPublicResults(eventId: string) { return (await listPublicMatches(eventId)).filter(({ match }) => match.status === 'COMPLETED') }
 
 export async function listPublicStandings(eventId: string) {

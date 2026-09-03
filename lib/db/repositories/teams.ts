@@ -22,7 +22,6 @@ export async function createTeam(eventId: string, data: { name: string; shortNam
       eventId,
       name: data.name,
       shortName: data.shortName || null,
-      status: 'ACTIVE',
     })
     .returning()
   return team
@@ -38,10 +37,6 @@ export async function updateTeam(teamId: string, data: { name?: string; shortNam
 }
 
 export async function archiveTeam(teamId: string) {
-  const [team] = await db
-    .update(teams)
-    .set({ status: 'ARCHIVED' })
-    .where(eq(teams.id, teamId))
-    .returning()
+  const [team] = await db.delete(teams).where(eq(teams.id, teamId)).returning()
   return team
 }
