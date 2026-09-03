@@ -4,12 +4,12 @@ import { events, eventMembers, teams } from '@/lib/db/schema'
 
 export type EventListItem = typeof events.$inferSelect
 
-export async function listEventsForUser(userId: string) {
+export async function listEventsForUser(userId: string, isSuperAdmin = false) {
   return db
     .select({ event: events })
     .from(events)
     .leftJoin(eventMembers, eq(eventMembers.eventId, events.id))
-    .where(eq(events.createdBy, userId))
+    .where(isSuperAdmin ? undefined : or(eq(events.createdBy, userId), eq(eventMembers.userId, userId)))
     .orderBy(desc(events.startDate))
 }
 
