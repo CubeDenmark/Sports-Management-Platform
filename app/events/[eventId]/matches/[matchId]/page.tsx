@@ -1,11 +1,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { requireEventAdmin } from '@/lib/authorization'
+import { requireEventAdmin, requireUser } from '@/lib/authorization'
+import { canScoreMatch } from '@/lib/services/scoring'
 import { getMatch } from '@/lib/db/repositories/matches'
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ eventId: string; matchId: string }> }) {
   const { eventId, matchId } = await params
-  await requireEventAdmin(eventId)
+  const user = await requireUser()
+  if (user.role !== 'SUPER_ADMIN') {
+    try { await requireEventAdmin(eventId) } catch { if (!(await canScoreMatch(matchId, user.id))) notFound() }
+  }
   const rows = await getMatch(matchId, eventId)
   if (!rows.length) notFound()
   const first = rows[0]
