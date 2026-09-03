@@ -7,9 +7,10 @@ export async function seedSports() {
 }
 
 export async function seedDevelopmentUser() {
-  const username = process.env.SEED_USERNAME?.trim().toLowerCase()
-  const password = process.env.SEED_PASSWORD
-  const displayName = process.env.SEED_DISPLAY_NAME?.trim() || username
-  if (!username || !password || !displayName) throw new Error('SEED_USERNAME, SEED_PASSWORD, and SEED_DISPLAY_NAME are required')
-  await db.insert(users).values({ username, passwordHash: await hashPassword(password), displayName }).onConflictDoNothing({ target: users.username })
+  const username = (process.env.SEED_ADMIN_USERNAME ?? process.env.SEED_USERNAME)?.trim().toLowerCase()
+  const password = process.env.SEED_ADMIN_PASSWORD ?? process.env.SEED_PASSWORD
+  const displayName = (process.env.SEED_ADMIN_DISPLAY_NAME ?? process.env.SEED_DISPLAY_NAME)?.trim() || username
+  if (!username || !password || !displayName) throw new Error('SEED_ADMIN_USERNAME and SEED_ADMIN_PASSWORD are required')
+  const passwordHash = await hashPassword(password)
+  await db.insert(users).values({ username, passwordHash, displayName, role: 'SUPER_ADMIN' }).onConflictDoUpdate({ target: users.username, set: { passwordHash, displayName, role: 'SUPER_ADMIN', isActive: true, updatedAt: new Date() } })
 }

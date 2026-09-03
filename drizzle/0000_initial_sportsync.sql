@@ -3,6 +3,7 @@ CREATE TYPE "public"."event_status" AS ENUM('DRAFT', 'UPCOMING', 'ONGOING', 'COM
 CREATE TYPE "public"."match_status" AS ENUM('SCHEDULED', 'READY', 'LIVE', 'PAUSED', 'COMPLETED', 'CANCELLED');--> statement-breakpoint
 CREATE TYPE "public"."membership_role" AS ENUM('EVENT_ADMIN', 'SCORER');--> statement-breakpoint
 CREATE TYPE "public"."score_event_status" AS ENUM('POSTED', 'UNDONE');--> statement-breakpoint
+CREATE TYPE "public"."user_role" AS ENUM('SUPER_ADMIN', 'USER');--> statement-breakpoint
 CREATE TABLE "audit_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"actor_user_id" uuid,
@@ -204,6 +205,7 @@ CREATE TABLE "users" (
 	"username" varchar(64) NOT NULL,
 	"password_hash" text NOT NULL,
 	"display_name" varchar(160) NOT NULL,
+	"role" "user_role" DEFAULT 'USER' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
