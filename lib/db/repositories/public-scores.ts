@@ -2,7 +2,12 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { courts, eventSports, events, matchParticipants, matchScorers, matchStates, matches, scoreEvents, sports, teams, users } from '@/lib/db/schema'
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+export function isPublicId(value: string) { return UUID_PATTERN.test(value) }
+function assertUuid(value: string) { if (!isPublicId(value)) throw new Error('Invalid identifier') }
+
 export async function getPublicEvent(eventId: string) {
+  assertUuid(eventId)
   const [event] = await db.select().from(events).where(and(eq(events.id, eventId), sql`${events.status} <> 'ARCHIVED'`)).limit(1)
   return event
 }
@@ -12,6 +17,7 @@ export async function listPublicMatches(eventId: string) {
 }
 
 export async function getPublicMatch(eventId: string, matchId: string) {
+  assertUuid(eventId); assertUuid(matchId)
   const rows = await db.select({ match: matches, sport: sports.name, court: courts.name, participantKey: matchParticipants.participantKey, teamName: teams.name, state: matchStates }).from(matches).innerJoin(eventSports, eq(eventSports.eventId, matches.eventId)).innerJoin(sports, eq(sports.id, eventSports.sportId)).leftJoin(courts, eq(courts.id, matches.courtId)).leftJoin(matchParticipants, eq(matchParticipants.matchId, matches.id)).leftJoin(teams, eq(teams.id, matchParticipants.teamId)).leftJoin(matchStates, eq(matchStates.matchId, matches.id)).where(and(eq(matches.eventId, eventId), eq(matches.id, matchId)))
   return rows
 }

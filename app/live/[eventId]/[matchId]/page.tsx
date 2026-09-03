@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getPublicEvent, getPublicMatch } from '@/lib/db/repositories/public-scores'
+import { getPublicEvent, getPublicMatch, isPublicId } from '@/lib/db/repositories/public-scores'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PublicMatchPage({ params }: { params: Promise<{ eventId: string; matchId: string }> }) {
   const { eventId, matchId } = await params
+  if (!isPublicId(eventId) || !isPublicId(matchId)) notFound()
   const [event, rows] = await Promise.all([getPublicEvent(eventId), getPublicMatch(eventId, matchId)])
   if (!event || rows.length === 0) notFound()
   const first = rows[0]
