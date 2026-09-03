@@ -1,47 +1,17 @@
 import Link from 'next/link'
-import { requireSuperAdmin } from '@/lib/authorization'
 import { listEventsForUser } from '@/lib/db/repositories/events'
+import { requireSuperAdmin } from '@/lib/authorization'
+import { AdminCard, SectionHeading } from '@/components/admin-shell'
 import { archiveEvent, createEvent } from './actions'
 
 export default async function AdminPage() {
   const user = await requireSuperAdmin()
-  const events = await listEventsForUser(user.id, true)
-
-  return (
-    <main className="min-h-screen bg-background px-6 py-12 text-foreground">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">SportSync Admin</p>
-            <h1 className="text-3xl font-semibold tracking-tight">Platform operations</h1>
-            <p className="text-muted-foreground">Manage events and access boundaries from one secure workspace.</p>
-          </div>
-          <div className="flex gap-3"><Link className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted" href="/admin/users">People & scorers</Link><Link className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted" href="/">Back to workspace</Link></div>
-        </header>
-        <section className="rounded-xl border border-border bg-card p-6">
-          <div className="flex flex-col gap-4 border-b border-border pb-4">
-            <div>
-              <h2 className="font-semibold">Create event</h2>
-              <p className="text-sm text-muted-foreground">Start a real event workspace backed by the database.</p>
-            </div>
-            <form action={createEvent} className="grid gap-3 md:grid-cols-4">
-              <input name="name" required maxLength={200} placeholder="Event name" className="rounded-md border border-input bg-background px-3 py-2 text-sm" />
-              <input name="startDate" type="datetime-local" required className="rounded-md border border-input bg-background px-3 py-2 text-sm" />
-              <input name="endDate" type="datetime-local" required className="rounded-md border border-input bg-background px-3 py-2 text-sm" />
-              <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Create event</button>
-              <input name="location" maxLength={240} placeholder="Location (optional)" className="rounded-md border border-input bg-background px-3 py-2 text-sm md:col-span-2" />
-              <input name="description" placeholder="Description (optional)" className="rounded-md border border-input bg-background px-3 py-2 text-sm md:col-span-2" />
-            </form>
-          </div>
-          <div className="flex items-center justify-between gap-4 border-b border-border pb-4 pt-6">
-            <div>
-              <h2 className="font-semibold">Events</h2>
-              <p className="text-sm text-muted-foreground">{events.length} events created by your account.</p>
-            </div>
-          </div>
-          {events.length ? <ul className="flex flex-col divide-y divide-border">{events.map(({ event }) => <li className="flex items-center justify-between gap-4 py-4" key={event.id}><div><p className="font-medium">{event.name}</p><p className="text-sm text-muted-foreground">{event.status} · {event.location ?? 'Location TBD'}</p></div><div className="flex items-center gap-4"><span className="text-sm text-muted-foreground">{event.slug}</span><Link className="rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted" href={`/events/${event.id}`}>Configure</Link>{event.status !== 'ARCHIVED' && <form action={archiveEvent.bind(null, event.id)}><button className="rounded-md border border-destructive/40 px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10" type="submit">Archive</button></form>}</div></li>)}</ul> : <p className="py-8 text-sm text-muted-foreground">No events yet. Use the form above to create your first event.</p>}
-        </section>
-      </div>
-    </main>
-  )
+  const rows = await listEventsForUser(user.id, true)
+  const active = rows.find(({ event }) => event.status !== 'ARCHIVED')?.event
+  return <div className="flex flex-col gap-8">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Active event</p><h1 className="text-3xl font-semibold tracking-tight">{active?.name ?? 'Your operations desk'}</h1><p className="mt-2 text-sm text-muted-foreground">{active ? `${active.location ?? 'Location TBD'} · ${active.status.toLowerCase()}` : 'Create your first event to start managing competition.'}</p></div><Link href="/admin/events" className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">+ New event</Link></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><AdminCard title="Live now" value="—" detail="No live matches" accent/><AdminCard title="Upcoming" value={rows.length} detail="Events in workspace"/><AdminCard title="Completed" value={rows.filter(({ event }) => event.status === 'COMPLETED').length} detail="Completed events"/><AdminCard title="Active scorers" value="—" detail="Open people to manage"/></div>
+    <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]"><section className="rounded-xl border border-border bg-card"><div className="border-b border-border p-5"><SectionHeading eyebrow="Workspace" title="Today&apos;s schedule" action={<Link href="/admin/schedule" className="text-sm text-primary hover:underline">View schedule ↗</Link>}/></div><div className="p-5"><div className="rounded-lg border border-dashed border-border p-8 text-center"><p className="font-medium">No matches scheduled</p><p className="mt-1 text-sm text-muted-foreground">Create an event and add matches from the schedule.</p><Link href="/admin/schedule" className="mt-4 inline-flex rounded-md border border-border px-3 py-2 text-sm font-medium">Open schedule</Link></div></div></section><section className="rounded-xl border border-border bg-card"><div className="border-b border-border p-5"><SectionHeading eyebrow="Live tools" title="Scoring desk" action={<Link href="/scorer" className="text-sm text-primary hover:underline">Open desk ↗</Link>}/></div><div className="p-5"><div className="rounded-lg bg-muted/40 p-6"><p className="font-medium">Ready for scoring</p><p className="mt-1 text-sm text-muted-foreground">Assigned matches will appear here with sync status and controls.</p></div></div></section></div>
+    <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]"><section className="rounded-xl border border-border bg-card"><div className="flex items-center justify-between border-b border-border p-5"><SectionHeading eyebrow="Management" title="Events" action={<Link href="/admin/events" className="text-sm text-primary hover:underline">All events ↗</Link>}/></div><div className="flex flex-col divide-y divide-border">{rows.length ? rows.slice(0, 5).map(({ event }) => <div className="flex flex-wrap items-center justify-between gap-3 p-5" key={event.id}><div><p className="font-medium">{event.name}</p><p className="mt-1 text-xs text-muted-foreground">{event.status} · {event.location ?? 'Location TBD'}</p></div><Link href={`/events/${event.id}`} className="rounded-md border border-border px-3 py-2 text-sm">Configure</Link></div>) : <p className="p-8 text-sm text-muted-foreground">No events yet. Create your first event to begin.</p>}</div></section><section className="rounded-xl border border-border bg-card"><div className="border-b border-border p-5"><SectionHeading eyebrow="System" title="Quick actions"/></div><div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-1"><Link href="/admin/users" className="rounded-lg border border-border p-4 hover:bg-muted"><p className="font-medium">Manage people</p><p className="mt-1 text-xs text-muted-foreground">Create scorer accounts and assign access.</p></Link><Link href="/admin/courts" className="rounded-lg border border-border p-4 hover:bg-muted"><p className="font-medium">Manage courts</p><p className="mt-1 text-xs text-muted-foreground">Track court availability.</p></Link><Link href="/admin/settings" className="rounded-lg border border-border p-4 hover:bg-muted"><p className="font-medium">Platform settings</p><p className="mt-1 text-xs text-muted-foreground">Configure operational defaults.</p></Link></div></section></div>
+  </div>
 }
