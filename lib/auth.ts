@@ -32,7 +32,7 @@ export async function createSession(userId: string) {
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: true,
-    sameSite: process.env.NODE_ENV === 'development' ? 'none' : 'lax',
+    sameSite: 'lax',
     path: '/',
     maxAge: SESSION_TTL_MS / 1000,
   })
@@ -50,7 +50,7 @@ export async function getCurrentUser() {
     .limit(1)
 
   const result = rows[0]
-  if (!result || !result.user.isActive) return null
+  if (!result || !result.user.isActive) { if (result) await db.delete(sessions).where(eq(sessions.id, result.session.id)); return null }
   return { id: result.user.id, username: result.user.username, displayName: result.user.displayName, role: result.user.role }
 }
 
