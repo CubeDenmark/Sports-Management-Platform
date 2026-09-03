@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { matchParticipants, matchScorers, matchStates, matches, scoreEvents } from '@/lib/db/schema'
+import { realtimePublisher } from '@/lib/realtime/publisher'
 
 export type ScoreAction = { matchId: string; userId: string; clientEventId: string; participantKey: 'HOME' | 'AWAY'; points: 1 | 2 | 3; period: 1 | 2 | 3 | 4 }
 
@@ -10,7 +11,7 @@ export async function canScoreMatch(matchId: string, userId: string) {
 }
 
 export async function appendScoreAction(input: ScoreAction) {
-  return db.transaction(async (tx) => {
+  const state = await db.transaction(async (tx) => {
     const assignment = await tx.select({ matchId: matchScorers.matchId }).from(matchScorers).where(and(eq(matchScorers.matchId, input.matchId), eq(matchScorers.userId, input.userId), eq(matchScorers.status, 'ACTIVE'))).limit(1)
     if (!assignment.length) throw new Error('Unauthorized')
     const [match] = await tx.select({ id: matches.id }).from(matches).where(eq(matches.id, input.matchId)).for('update')
@@ -23,6 +24,8 @@ export async function appendScoreAction(input: ScoreAction) {
     await tx.insert(scoreEvents).values({ matchId: input.matchId, clientEventId: input.clientEventId, participantKey: input.participantKey, eventType: `BASKETBALL_${input.points}`, points: input.points, period: input.period, sequenceNumber: (last?.sequenceNumber ?? 0) + 1, createdBy: input.userId })
     return updateProjection(tx, input.matchId, input.period, 'LIVE')
   })
+  await realtimePublisher.publish({ type: 'score.created', matchId: input.matchId, version: state?.version })
+  return state
 }
 
 export async function undoScoreAction(matchId: string, userId: string) {
