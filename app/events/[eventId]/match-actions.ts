@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { and, eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
-import { eventMembers, eventSports, events, matchParticipants, matchScorers, matches, teams, users } from '@/lib/db/schema'
+import { courts, eventMembers, eventSports, events, matchParticipants, matchScorers, matches, teams, users } from '@/lib/db/schema'
 import { requireEventAdmin, requireUser } from '@/lib/authorization'
 import { hasCourtConflict } from '@/lib/db/repositories/matches'
 
@@ -16,7 +16,8 @@ export async function createMatch(eventId: string, input: unknown) {
   if (data.homeTeamId === data.awayTeamId) throw new Error('Select two different teams')
   const sports = await db.select({ id: eventSports.sportId }).from(eventSports).where(and(eq(eventSports.eventId, eventId), eq(eventSports.sportId, data.eventSportId))).limit(1)
   const validTeams = await db.select({ id: teams.id }).from(teams).where(and(eq(teams.eventId, eventId)))
-  if (!sports.length || !validTeams.some((team) => team.id === data.homeTeamId) || !validTeams.some((team) => team.id === data.awayTeamId)) throw new Error('Invalid event selection')
+  const validCourt = data.courtId ? await db.select({ id: courts.id }).from(courts).where(and(eq(courts.id, data.courtId), eq(courts.eventId, eventId))).limit(1) : [{ id: null }]
+  if (!sports.length || !validTeams.some((team) => team.id === data.homeTeamId) || !validTeams.some((team) => team.id === data.awayTeamId) || !validCourt.length) throw new Error('Invalid event selection')
   if (data.courtId && data.scheduledStart && await hasCourtConflict(eventId, data.courtId, data.scheduledStart)) throw new Error('That court is already scheduled at this time')
   const [match] = await db.insert(matches).values({ eventId, eventSportId: data.eventSportId, courtId: data.courtId, scheduledStart: data.scheduledStart, status: 'READY' }).returning()
   await db.insert(matchParticipants).values([{ matchId: match.id, participantKey: 'HOME', teamId: data.homeTeamId }, { matchId: match.id, participantKey: 'AWAY', teamId: data.awayTeamId }])

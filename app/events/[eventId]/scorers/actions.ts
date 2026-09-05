@@ -12,6 +12,8 @@ export async function assignMember(eventId: string, formData: FormData) {
   const actor = await requireEventAdmin(eventId)
   const userId = z.string().uuid().parse(formData.get('userId'))
   const role = roleSchema.parse(formData.get('role'))
+  const [target] = await db.select({ role: users.role, isActive: users.isActive }).from(users).where(eq(users.id, userId)).limit(1)
+  if (!target?.isActive || target.role !== role) throw new Error('Select an active account whose role matches the assignment.')
   await db.insert(eventMembers).values({ eventId, userId, role }).onConflictDoUpdate({ target: [eventMembers.eventId, eventMembers.userId], set: { role, updatedAt: new Date() } })
   revalidatePath(`/events/${eventId}/scorers`)
 }
