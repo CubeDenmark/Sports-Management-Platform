@@ -10,6 +10,7 @@ const primary = [
   ['Events', '/admin/events'],
   ['Schedule', '/admin/schedule'],
   ['Teams', '/admin/teams'],
+  ['Players', '/admin/players'],
   ['Courts', '/admin/courts'],
 ]
 const tools = [['Scoring desk', '/scorer'], ['Live boards', '/live']]
