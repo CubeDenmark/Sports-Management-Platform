@@ -1,8 +1,12 @@
 import { eq, and } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { sports, eventSports, events } from '@/lib/db/schema'
+import { sports, eventSports, events, seededSports } from '@/lib/db/schema'
 
 export async function getAllSports() {
+  const existing = await db.select().from(sports).orderBy(sports.name)
+  if (existing.length > 0) return existing
+
+  await db.insert(sports).values([...seededSports]).onConflictDoNothing({ target: sports.slug })
   return db.select().from(sports).orderBy(sports.name)
 }
 
