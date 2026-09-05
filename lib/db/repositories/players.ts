@@ -11,8 +11,6 @@ export async function createPlayer(data: {
     .insert(players)
     .values({
       displayName: data.displayName,
-      firstName: data.firstName || null,
-      lastName: data.lastName || null,
       status: 'ACTIVE',
     })
     .returning()
@@ -30,8 +28,6 @@ export async function getPlayerById(playerId: string) {
 
 export async function updatePlayer(playerId: string, data: {
   displayName?: string
-  firstName?: string
-  lastName?: string
 }) {
   const [player] = await db
     .update(players)
