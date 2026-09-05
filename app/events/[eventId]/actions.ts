@@ -2,10 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { and, eq, exists } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
-import { eventMembers, events, matches, teamPlayers, teams } from '@/lib/db/schema'
+import { requireEventAdmin } from '@/lib/authorization'
+import { matches, teamPlayers, teams } from '@/lib/db/schema'
 import * as sportsRepo from '@/lib/db/repositories/sports'
 import * as teamsRepo from '@/lib/db/repositories/teams'
 import * as playersRepo from '@/lib/db/repositories/players'
@@ -15,23 +15,15 @@ const teamSchema = z.object({ eventId: z.string().uuid(), name: z.string().trim(
 const playerSchema = z.object({ teamId: z.string().uuid(), displayName: z.string().trim().min(1).max(160), firstName: z.string().trim().max(80).optional(), lastName: z.string().trim().max(80).optional(), jerseyNumber: z.coerce.number().int().min(0).max(999).optional() })
 const courtSchema = z.object({ eventId: z.string().uuid(), name: z.string().trim().min(1).max(120) })
 
-async function userId() {
-  const user = await getCurrentUser()
-  if (!user) throw new Error('Unauthorized')
-  return user.id
-}
-
 async function assertEventAdmin(eventId: string) {
-  const id = await userId()
-  const [row] = await db.select({ id: events.id }).from(events).leftJoin(eventMembers, eq(eventMembers.eventId, events.id)).where(and(eq(events.id, eventId), eq(events.createdBy, id))).limit(1)
-  if (!row) throw new Error('You do not have permission to manage this event.')
+  await requireEventAdmin(eventId)
 }
 
 export async function toggleEventSport(eventId: string, sportId: string, enabled: boolean) {
   await assertEventAdmin(eventId)
   if (enabled) await sportsRepo.addSportToEvent(eventId, sportId)
   else {
-    const historical = await db.select({ id: matches.id }).from(matches).where(and(eq(matches.eventId, eventId), exists(db.select({ id: matches.id }).from(matches).where(eq(matches.eventId, eventId))))).limit(1)
+    const historical = await db.select({ id: matches.id }).from(matches).where(eq(matches.eventId, eventId)).limit(1)
     if (historical[0]) throw new Error('Sports with match history cannot be removed.')
     await sportsRepo.removeSportFromEvent(eventId, sportId)
   }
@@ -47,7 +39,7 @@ export async function saveTeam(formData: FormData) {
 
 export async function archiveTeamAction(eventId: string, teamId: string) {
   await assertEventAdmin(eventId)
-  const [match] = await db.select({ id: matches.id }).from(matches).where(and(eq(matches.eventId, eventId), exists(db.select({ id: matches.id }).from(matches).where(eq(matches.eventId, eventId))))).limit(1)
+  const [match] = await db.select({ id: matches.id }).from(matches).where(eq(matches.eventId, eventId)).limit(1)
   if (match) throw new Error('Teams with match history cannot be deleted.')
   await teamsRepo.archiveTeam(teamId)
   revalidatePath(`/events/${eventId}`)

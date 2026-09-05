@@ -25,7 +25,6 @@ export async function createCourt(eventId: string, name: string) {
     .values({
       eventId,
       name,
-      status: 'ACTIVE',
     })
     .returning()
   return court
@@ -41,10 +40,6 @@ export async function updateCourt(courtId: string, name: string) {
 }
 
 export async function archiveCourt(courtId: string) {
-  const [court] = await db
-    .update(courts)
-    .set({ status: 'ARCHIVED' })
-    .where(eq(courts.id, courtId))
-    .returning()
+  const [court] = await db.delete(courts).where(eq(courts.id, courtId)).returning()
   return court
 }

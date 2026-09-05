@@ -1,0 +1,6 @@
+import Link from 'next/link'
+import { SectionHeading } from './admin-shell'
+
+export function AdminDestination({ title, eyebrow, description, action, children }: { title: string; eyebrow: string; description: string; action?: React.ReactNode; children?: React.ReactNode }) { return <div className="flex flex-col gap-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary">{eyebrow}</p><h1 className="text-3xl font-semibold tracking-tight">{title}</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p></div>{action}</div>{children ?? <section className="rounded-xl border border-border bg-card p-10 text-center"><p className="font-medium">Nothing to show yet</p><p className="mt-1 text-sm text-muted-foreground">This workspace is ready for database-backed records.</p></section>}</div> }
+
+export function DestinationLinks({ links }: { links: [string, string][] }) { return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{links.map(([title, href]) => <Link href={href} key={href} className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/50 hover:bg-muted/40"><p className="font-medium">{title}</p><p className="mt-2 text-sm text-muted-foreground">Open {title.toLowerCase()} workspace</p></Link>)}</div> }

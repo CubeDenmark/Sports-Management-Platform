@@ -12,6 +12,7 @@ const scoreInput = z.object({ matchId: z.string().uuid(), participantKey: z.enum
 
 async function requireAssigned(matchId: string) {
   const user = await requireUser()
+  if (user.role !== 'SCORER') throw new Error('Only scorer accounts can access assigned matches.')
   const rows = await db.select({ matchId: matchScorers.matchId }).from(matchScorers).where(and(eq(matchScorers.matchId, matchId), eq(matchScorers.userId, user.id), eq(matchScorers.status, 'ACTIVE'))).limit(1)
   if (!rows.length) throw new Error('You are not assigned to this match')
   return user
