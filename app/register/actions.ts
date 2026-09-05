@@ -25,7 +25,7 @@ export async function register(_state: RegisterState, formData: FormData): Promi
   const passwordHash = await hashPassword(password)
   const [user] = await db.transaction(async (tx) => {
     const [{ total }] = await tx.select({ total: count() }).from(users)
-    return tx.insert(users).values({ username, displayName, passwordHash, role: total === 0 ? 'SUPER_ADMIN' : 'USER' }).returning({ id: users.id })
+    return tx.insert(users).values({ username, displayName, passwordHash, role: total === 0 ? 'SUPER_ADMIN' : 'SCORER' }).returning({ id: users.id })
   })
   await createSession(user.id)
   redirect('/')

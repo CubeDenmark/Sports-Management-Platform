@@ -4,13 +4,13 @@ import { boolean, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, time
 const timestamps = { createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(), updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull() }
 
 export const eventStatus = pgEnum('event_status', ['DRAFT', 'UPCOMING', 'ONGOING', 'COMPLETED', 'ARCHIVED'])
-export const userRole = pgEnum('user_role', ['SUPER_ADMIN', 'USER'])
+export const userRole = pgEnum('user_role', ['SUPER_ADMIN', 'EVENT_ADMIN', 'SCORER'])
 export const membershipRole = pgEnum('membership_role', ['EVENT_ADMIN', 'SCORER'])
 export const matchStatus = pgEnum('match_status', ['SCHEDULED', 'READY', 'LIVE', 'PAUSED', 'COMPLETED', 'CANCELLED'])
 export const assignmentStatus = pgEnum('assignment_status', ['ACTIVE', 'REVOKED'])
 export const scoreEventStatus = pgEnum('score_event_status', ['POSTED', 'UNDONE'])
 
-export const users = pgTable('users', { id: uuid('id').defaultRandom().primaryKey(), username: varchar('username', { length: 64 }).notNull(), passwordHash: text('password_hash').notNull(), displayName: varchar('display_name', { length: 160 }).notNull(), role: userRole('role').default('USER').notNull(), isActive: boolean('is_active').default(true).notNull(), ...timestamps }, (t) => [uniqueIndex('users_username_idx').on(t.username)])
+export const users = pgTable('users', { id: uuid('id').defaultRandom().primaryKey(), username: varchar('username', { length: 64 }).notNull(), passwordHash: text('password_hash').notNull(), displayName: varchar('display_name', { length: 160 }).notNull(), role: userRole('role').default('SCORER').notNull(), isActive: boolean('is_active').default(true).notNull(), ...timestamps }, (t) => [uniqueIndex('users_username_idx').on(t.username)])
 export const sessions = pgTable('sessions', { id: uuid('id').defaultRandom().primaryKey(), userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), tokenHash: text('token_hash').notNull(), expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(), ...timestamps }, (t) => [uniqueIndex('sessions_token_hash_idx').on(t.tokenHash)])
 export const events = pgTable('events', { id: uuid('id').defaultRandom().primaryKey(), name: varchar('name', { length: 200 }).notNull(), slug: varchar('slug', { length: 220 }).notNull(), description: text('description'), startDate: timestamp('start_date', { withTimezone: true }).notNull(), endDate: timestamp('end_date', { withTimezone: true }).notNull(), location: varchar('location', { length: 240 }), status: eventStatus('status').default('DRAFT').notNull(), createdBy: uuid('created_by').notNull().references(() => users.id), ...timestamps }, (t) => [uniqueIndex('events_slug_idx').on(t.slug)])
 export const eventMembers = pgTable('event_members', { eventId: uuid('event_id').notNull().references(() => events.id, { onDelete: 'cascade' }), userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), role: membershipRole('role').notNull(), ...timestamps }, (t) => [primaryKey({ columns: [t.eventId, t.userId] }), index('event_members_user_idx').on(t.userId)])

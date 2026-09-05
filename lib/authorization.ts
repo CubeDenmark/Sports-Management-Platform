@@ -29,6 +29,6 @@ export async function canManageEvent(eventId: string, userId: string) {
   return Boolean(rows[0])
 }
 
-export const roleLabels = { SUPER_ADMIN: 'Super Admin', USER: 'User' } as const
+export const roleLabels = { SUPER_ADMIN: 'Super Admin', EVENT_ADMIN: 'Event Admin', SCORER: 'Scorer' } as const
 export type Role = keyof typeof roleLabels
 export const unauthorizedMessage = 'You do not have permission to perform this action.'
