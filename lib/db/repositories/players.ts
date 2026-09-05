@@ -11,7 +11,6 @@ export async function createPlayer(data: {
     .insert(players)
     .values({
       displayName: data.displayName,
-      status: 'ACTIVE',
     })
     .returning()
   return player
@@ -19,7 +18,7 @@ export async function createPlayer(data: {
 
 export async function getPlayerById(playerId: string) {
   const [player] = await db
-    .select()
+    .select({ id: players.id, displayName: players.displayName })
     .from(players)
     .where(eq(players.id, playerId))
     .limit(1)
@@ -40,9 +39,11 @@ export async function updatePlayer(playerId: string, data: {
 export async function getTeamRoster(teamId: string) {
   return db
     .select({
-      player: players,
+      player: {
+        id: players.id,
+        displayName: players.displayName,
+      },
       jerseyNumber: teamPlayers.jerseyNumber,
-      status: teamPlayers.status,
     })
     .from(teamPlayers)
     .innerJoin(players, eq(teamPlayers.playerId, players.id))
@@ -61,7 +62,6 @@ export async function assignPlayerToTeam(
       teamId,
       playerId,
       jerseyNumber: jerseyNumber || null,
-      status: 'ACTIVE',
     })
     .onConflictDoNothing()
 }
