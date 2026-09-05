@@ -9,10 +9,8 @@ const primary = [
   ['Overview', '/admin'],
   ['Events', '/admin/events'],
   ['Schedule', '/admin/schedule'],
-  ['Teams', '/admin/teams'],
-  ['Players', '/admin/players'],
-  ['Courts', '/admin/courts'],
 ]
+const resources = [['Teams', '/admin/teams'], ['Players', '/admin/players'], ['Courts', '/admin/courts']]
 const tools = [['Scoring desk', '/scorer'], ['Live boards', '/live']]
 const system = [['People', '/admin/users'], ['Settings', '/admin/settings']]
 
@@ -27,7 +25,7 @@ export function AdminShell({ children, user }: { children: React.ReactNode; user
   return <div className="min-h-screen bg-background text-foreground lg:flex">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 transition-transform lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center gap-3 px-2"><div className="grid size-10 place-items-center rounded-xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">SS</div><div><p className="font-semibold tracking-tight">SportSync</p><p className="text-xs text-sidebar-foreground/60">Event operations</p></div></div>
-      <nav className="mt-4 flex flex-1 flex-col"><NavGroup label="Workspace" items={primary} pathname={pathname}/><NavGroup label="Live tools" items={tools} pathname={pathname}/><NavGroup label="System" items={system} pathname={pathname}/></nav>
+      <nav className="mt-4 flex flex-1 flex-col"><NavGroup label="Workspace" items={primary} pathname={pathname}/><NavGroup label="Event resources" items={resources} pathname={pathname}/><NavGroup label="Live tools" items={tools} pathname={pathname}/><NavGroup label="System" items={system} pathname={pathname}/></nav>
       <form action={logout} className="border-t border-sidebar-border pt-4"><button className="w-full rounded-lg px-3 py-2 text-left text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" type="submit">Sign out</button></form>
     </aside>
     {open && <button aria-label="Close navigation" className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setOpen(false)} />}

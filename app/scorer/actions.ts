@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireUser } from '@/lib/authorization'
 import { db } from '@/lib/db'
-import { matchScorers, matches, matchStates } from '@/lib/db/schema'
+import { eventSports, matchScorers, matches, matchStates, sports } from '@/lib/db/schema'
 import { appendScoreAction, getScoringState, undoScoreAction } from '@/lib/services/scoring'
 
 const scoreInput = z.object({ matchId: z.string().uuid(), participantKey: z.enum(['HOME', 'AWAY']), points: z.number().int().min(1).max(3), period: z.number().int().min(1).max(9), clientEventId: z.string().min(8).max(120), sport: z.enum(['basketball', 'volleyball', 'badminton']).default('basketball') })
@@ -23,9 +23,11 @@ export async function getBasketballState(matchId: string) { const user = await r
 export async function postSportScore(input: unknown) {
   const data = scoreInput.parse(input)
   const user = await requireAssigned(data.matchId)
-  const [match] = await db.select({ eventId: matches.eventId }).from(matches).where(eq(matches.id, data.matchId)).limit(1)
+  const [match] = await db.select({ eventId: matches.eventId, eventSportId: matches.eventSportId }).from(matches).where(eq(matches.id, data.matchId)).limit(1)
   if (!match) throw new Error('Match not found')
-  await appendScoreAction({ matchId: data.matchId, userId: user.id, clientEventId: data.clientEventId, participantKey: data.participantKey, points: data.points, period: data.period, sport: data.sport })
+  const [sport] = await db.select({ slug: sports.slug }).from(eventSports).innerJoin(sports, eq(sports.id, eventSports.sportId)).where(and(eq(eventSports.eventId, match.eventId), eq(eventSports.sportId, match.eventSportId))).limit(1)
+  if (!sport) throw new Error('Match sport is not configured')
+  await appendScoreAction({ matchId: data.matchId, userId: user.id, clientEventId: data.clientEventId, participantKey: data.participantKey, points: data.points, period: data.period, sport: sport.slug })
   revalidatePath(`/events/${match.eventId}/matches/${data.matchId}`); revalidatePath(`/scorer/${data.matchId}`)
 }
 

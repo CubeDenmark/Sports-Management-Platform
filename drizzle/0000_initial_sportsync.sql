@@ -3,7 +3,7 @@ CREATE TYPE "public"."event_status" AS ENUM('DRAFT', 'UPCOMING', 'ONGOING', 'COM
 CREATE TYPE "public"."match_status" AS ENUM('SCHEDULED', 'READY', 'LIVE', 'PAUSED', 'COMPLETED', 'CANCELLED');--> statement-breakpoint
 CREATE TYPE "public"."membership_role" AS ENUM('EVENT_ADMIN', 'SCORER');--> statement-breakpoint
 CREATE TYPE "public"."score_event_status" AS ENUM('POSTED', 'UNDONE');--> statement-breakpoint
-CREATE TYPE "public"."user_role" AS ENUM('SUPER_ADMIN', 'USER');--> statement-breakpoint
+CREATE TYPE "public"."user_role" AS ENUM('SUPER_ADMIN', 'EVENT_ADMIN', 'SCORER');--> statement-breakpoint
 CREATE TABLE "audit_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"actor_user_id" uuid,
@@ -80,7 +80,7 @@ CREATE TABLE "match_states" (
 	"current_period" integer DEFAULT 1 NOT NULL,
 	"period_state" jsonb,
 	"clock_state" jsonb,
-	"match_status" "match_status" DEFAULT 'SCHEDULED' NOT NULL,
+	"match_status" "match_status" DEFAULT 'READY' NOT NULL,
 	"version" integer DEFAULT 0 NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -95,7 +95,7 @@ CREATE TABLE "matches" (
 	"scheduled_start" timestamp with time zone,
 	"actual_start" timestamp with time zone,
 	"actual_end" timestamp with time zone,
-	"status" "match_status" DEFAULT 'SCHEDULED' NOT NULL,
+	"status" "match_status" DEFAULT 'READY' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -103,6 +103,7 @@ CREATE TABLE "matches" (
 CREATE TABLE "players" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"display_name" varchar(160) NOT NULL,
+	"status" varchar(32) DEFAULT 'ACTIVE' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -205,7 +206,7 @@ CREATE TABLE "users" (
 	"username" varchar(64) NOT NULL,
 	"password_hash" text NOT NULL,
 	"display_name" varchar(160) NOT NULL,
-	"role" "user_role" DEFAULT 'USER' NOT NULL,
+	"role" "user_role" DEFAULT 'SCORER' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
