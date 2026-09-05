@@ -206,7 +206,7 @@ CREATE TABLE "users" (
 	"username" varchar(64) NOT NULL,
 	"password_hash" text NOT NULL,
 	"display_name" varchar(160) NOT NULL,
-	"role" "user_role" DEFAULT 'USER' NOT NULL,
+	"role" "user_role" DEFAULT 'SCORER' NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
