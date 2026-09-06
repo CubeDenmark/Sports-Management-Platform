@@ -48,6 +48,5 @@ export async function updateMatchSchedule(eventId: string, matchId: string, inpu
 
 export async function listAssignedMatches() {
   const user = await requireUser()
-  if (user.role !== 'SCORER') return []
-  return db.select({ match: matches, eventName: events.name }).from(matchScorers).innerJoin(matches, eq(matches.id, matchScorers.matchId)).innerJoin(events, eq(events.id, matches.eventId)).where(and(eq(matchScorers.userId, user.id), eq(matchScorers.status, 'ACTIVE'))).orderBy(matches.scheduledStart)
+  return db.select({ match: matches, eventName: events.name }).from(matchScorers).innerJoin(matches, eq(matches.id, matchScorers.matchId)).innerJoin(events, eq(events.id, matches.eventId)).innerJoin(eventMembers, eq(eventMembers.eventId, matches.eventId)).where(and(eq(matchScorers.userId, user.id), eq(matchScorers.status, 'ACTIVE'), eq(eventMembers.userId, user.id), eq(eventMembers.role, 'SCORER'))).orderBy(matches.scheduledStart)
 }

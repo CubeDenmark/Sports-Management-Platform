@@ -7,22 +7,15 @@ import { db } from '@/lib/db'
 import { eventMembers, users } from '@/lib/db/schema'
 import { getCurrentUser, hashPassword } from '@/lib/auth'
 
-const schema = z.object({ username: z.string().trim().toLowerCase().min(3).max(64).regex(/^[a-z0-9._-]+$/), displayName: z.string().trim().min(2).max(160), password: z.string().min(10).max(200), role: z.enum(['SUPER_ADMIN', 'EVENT_ADMIN', 'SCORER']), eventId: z.string().uuid().optional() })
+const schema = z.object({ username: z.string().trim().toLowerCase().min(3).max(64).regex(/^[a-z0-9._-]+$/), displayName: z.string().trim().min(2).max(160), password: z.string().min(10).max(200), role: z.enum(['SUPER_ADMIN', 'EVENT_ADMIN', 'SCORER']) })
 
 async function requireAdmin() { const user = await getCurrentUser(); if (!user || user.role !== 'SUPER_ADMIN') throw new Error('Unauthorized'); return user }
 
 export async function createUser(formData: FormData) {
   await requireAdmin()
   const input = schema.parse(Object.fromEntries(formData))
-  const { password, eventId, ...userInput } = input
-  if (eventId) {
-    const event = await db.query.events.findFirst({ where: (table, { eq }) => eq(table.id, eventId) })
-    if (!event) throw new Error('Selected event was not found.')
-  }
-  const [created] = await db.insert(users).values({ ...userInput, passwordHash: await hashPassword(password) }).returning({ id: users.id })
-  if (eventId && input.role !== 'SUPER_ADMIN') {
-    await db.insert(eventMembers).values({ eventId, userId: created.id, role: input.role }).onConflictDoUpdate({ target: [eventMembers.eventId, eventMembers.userId], set: { role: input.role, updatedAt: new Date() } })
-  }
+  const { password, ...userInput } = input
+  await db.insert(users).values({ ...userInput, passwordHash: await hashPassword(password) })
   revalidatePath('/admin/users')
 }
 
