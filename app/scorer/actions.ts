@@ -40,9 +40,10 @@ export async function postBasketballScore(input: unknown) { return postSportScor
 export async function setBasketballStatus(matchId: string, status: 'LIVE' | 'PAUSED' | 'COMPLETED') {
   const user = await requireAssigned(matchId)
   await db.transaction(async (tx) => {
-    const [state] = await tx.select().from(matchStates).where(eq(matchStates.matchId, matchId)).for('update')
-    await tx.update(matchStates).set({ matchStatus: status, version: (state?.version ?? 0) + 1, updatedAt: new Date() }).where(eq(matchStates.matchId, matchId))
-    await tx.update(matches).set({ status, updatedAt: new Date() }).where(eq(matches.id, matchId))
+    await tx.select({ matchId: matchStates.matchId }).from(matchStates).where(eq(matchStates.matchId, matchId)).for('update')
+    const now = new Date()
+    await tx.insert(matchStates).values({ matchId, matchStatus: status, version: 1, updatedAt: now }).onConflictDoUpdate({ target: matchStates.matchId, set: { matchStatus: status, version: sql`${matchStates.version} + 1`, updatedAt: now } })
+    await tx.update(matches).set({ status, actualStart: status === 'LIVE' ? now : undefined, actualEnd: status === 'COMPLETED' ? now : undefined, updatedAt: now }).where(eq(matches.id, matchId))
   })
   void user
   revalidatePath(`/scorer/${matchId}`)
