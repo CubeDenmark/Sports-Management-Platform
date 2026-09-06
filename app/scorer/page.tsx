@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { listAssignedMatches } from '@/app/events/[eventId]/match-actions'
+import { listAssignedMatches } from './actions'
 
 export default async function ScorerPage() {
   const assigned = await listAssignedMatches()

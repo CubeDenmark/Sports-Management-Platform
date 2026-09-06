@@ -45,8 +45,3 @@ export async function updateMatchSchedule(eventId: string, matchId: string, inpu
   revalidatePath(`/events/${eventId}/matches`)
   revalidatePath(`/events/${eventId}/matches/${matchId}`)
 }
-
-export async function listAssignedMatches() {
-  const user = await requireUser()
-  return db.select({ match: matches, eventName: events.name, sport: sports.name, court: courts.name, homeTeam: sql<string | null>`max(case when ${matchParticipants.participantKey} = 'HOME' then ${teams.name} end)`, awayTeam: sql<string | null>`max(case when ${matchParticipants.participantKey} = 'AWAY' then ${teams.name} end)` }).from(matchScorers).innerJoin(matches, eq(matches.id, matchScorers.matchId)).innerJoin(events, eq(events.id, matches.eventId)).innerJoin(eventSports, and(eq(eventSports.eventId, matches.eventId), eq(eventSports.sportId, matches.eventSportId))).innerJoin(sports, eq(sports.id, eventSports.sportId)).leftJoin(courts, eq(courts.id, matches.courtId)).leftJoin(matchParticipants, eq(matchParticipants.matchId, matches.id)).leftJoin(teams, eq(teams.id, matchParticipants.teamId)).innerJoin(users, eq(users.id, matchScorers.userId)).where(and(eq(matchScorers.userId, user.id), eq(matchScorers.status, 'ACTIVE'), eq(users.role, 'SCORER'), eq(users.isActive, true))).groupBy(matches.id, events.name, sports.name, courts.name).orderBy(matches.scheduledStart)
-}
