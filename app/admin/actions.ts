@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { and, eq, ne } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { events } from '@/lib/db/schema'
+import { auditLogs, eventMembers, events } from '@/lib/db/schema'
 import { getCurrentUser } from '@/lib/auth'
 
 const eventSchema = z.object({
@@ -31,6 +31,8 @@ export async function createEvent(formData: FormData) {
   const input = eventSchema.parse({ name: formData.get('name'), startDate: formData.get('startDate'), endDate: formData.get('endDate'), location: formData.get('location') || undefined, description: formData.get('description') || undefined })
   const slug = `${slugify(input.name)}-${Date.now().toString(36)}`
   const [event] = await db.insert(events).values({ ...input, slug, createdBy: user.id }).returning({ id: events.id })
+  await db.insert(eventMembers).values({ eventId: event.id, userId: user.id, role: 'EVENT_ADMIN' })
+  await db.insert(auditLogs).values({ actorUserId: user.id, entityType: 'EVENT', entityId: event.id, action: 'EVENT_CREATED', metadata: { name: input.name } })
   revalidatePath('/admin')
   redirect(`/events/${event.id}`)
 }
