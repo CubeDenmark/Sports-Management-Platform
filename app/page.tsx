@@ -17,7 +17,6 @@ export default async function Page() {
         {user.role === 'EVENT_ADMIN' && <Link href="/admin/events" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Manage my events</Link>}
         {user.role === 'SCORER' && <Link href="/scorer" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Open scorer desk</Link>}
         <Link href="/live" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Live events</Link>
-        <Link href="/scorer" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Scorer workspace</Link>
       </nav>
       <form action={logout}>
         <button type="submit" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Sign out</button>

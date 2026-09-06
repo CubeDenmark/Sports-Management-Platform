@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { eventMembers, users } from '@/lib/db/schema'
 import { getCurrentUser, hashPassword } from '@/lib/auth'
@@ -23,6 +23,26 @@ export async function createUser(formData: FormData) {
   if (eventId && input.role !== 'SUPER_ADMIN') {
     await db.insert(eventMembers).values({ eventId, userId: created.id, role: input.role }).onConflictDoUpdate({ target: [eventMembers.eventId, eventMembers.userId], set: { role: input.role, updatedAt: new Date() } })
   }
+  revalidatePath('/admin/users')
+}
+
+export async function assignMembership(formData: FormData) {
+  await requireAdmin()
+  const input = z.object({ userId: z.string().uuid(), eventId: z.string().uuid(), role: z.enum(['EVENT_ADMIN', 'SCORER']) }).parse(Object.fromEntries(formData))
+  const [event, user] = await Promise.all([
+    db.query.events.findFirst({ where: (table, { eq }) => eq(table.id, input.eventId) }),
+    db.query.users.findFirst({ where: (table, { eq }) => eq(table.id, input.userId) }),
+  ])
+  if (!event) throw new Error('Selected event was not found.')
+  if (!user || user.role === 'SUPER_ADMIN') throw new Error('Only non-admin operator accounts can be assigned to events.')
+  await db.insert(eventMembers).values(input).onConflictDoUpdate({ target: [eventMembers.eventId, eventMembers.userId], set: { role: input.role, updatedAt: new Date() } })
+  revalidatePath('/admin/users')
+}
+
+export async function revokeMembership(formData: FormData) {
+  await requireAdmin()
+  const input = z.object({ userId: z.string().uuid(), eventId: z.string().uuid() }).parse(Object.fromEntries(formData))
+  await db.delete(eventMembers).where(and(eq(eventMembers.eventId, input.eventId), eq(eventMembers.userId, input.userId)))
   revalidatePath('/admin/users')
 }
 
