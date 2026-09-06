@@ -5,14 +5,14 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireUser } from '@/lib/authorization'
 import { db } from '@/lib/db'
-import { eventMembers, eventSports, matchScorers, matches, matchStates, sports } from '@/lib/db/schema'
+import { eventSports, matchScorers, matches, matchStates, sports, users } from '@/lib/db/schema'
 import { appendScoreAction, getScoringState, undoScoreAction } from '@/lib/services/scoring'
 
 const scoreInput = z.object({ matchId: z.string().uuid(), participantKey: z.enum(['HOME', 'AWAY']), points: z.number().int().min(1).max(3), period: z.number().int().min(1).max(9), clientEventId: z.string().min(8).max(120), sport: z.enum(['basketball', 'volleyball', 'badminton']).default('basketball') })
 
 async function requireAssigned(matchId: string) {
   const user = await requireUser()
-  const rows = await db.select({ matchId: matchScorers.matchId }).from(matchScorers).innerJoin(matches, eq(matches.id, matchScorers.matchId)).innerJoin(eventMembers, eq(eventMembers.eventId, matches.eventId)).where(and(eq(matchScorers.matchId, matchId), eq(matchScorers.userId, user.id), eq(matchScorers.status, 'ACTIVE'), eq(eventMembers.userId, user.id), eq(eventMembers.role, 'SCORER'))).limit(1)
+  const rows = await db.select({ matchId: matchScorers.matchId }).from(matchScorers).innerJoin(users, eq(users.id, matchScorers.userId)).where(and(eq(matchScorers.matchId, matchId), eq(matchScorers.userId, user.id), eq(matchScorers.status, 'ACTIVE'), eq(users.role, 'SCORER'), eq(users.isActive, true))).limit(1)
   if (!rows.length) throw new Error('You are not assigned to this match')
   return user
 }
