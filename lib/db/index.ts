@@ -12,5 +12,11 @@ if (!databaseUrl) {
   throw new Error('Database connection is not configured.')
 }
 
-export const pool = new Pool({ connectionString: databaseUrl })
+const connectionUrl = new URL(databaseUrl)
+connectionUrl.searchParams.delete('sslmode')
+
+export const pool = new Pool({
+  connectionString: connectionUrl.toString(),
+  ssl: { rejectUnauthorized: false },
+})
 export const db = drizzle(pool, { schema })
