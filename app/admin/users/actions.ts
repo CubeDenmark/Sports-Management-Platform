@@ -15,6 +15,10 @@ export async function createUser(formData: FormData) {
   await requireAdmin()
   const input = schema.parse(Object.fromEntries(formData))
   const { password, eventId, ...userInput } = input
+  if (eventId) {
+    const event = await db.query.events.findFirst({ where: (table, { eq }) => eq(table.id, eventId) })
+    if (!event) throw new Error('Selected event was not found.')
+  }
   const [created] = await db.insert(users).values({ ...userInput, passwordHash: await hashPassword(password) }).returning({ id: users.id })
   if (eventId && input.role !== 'SUPER_ADMIN') {
     await db.insert(eventMembers).values({ eventId, userId: created.id, role: input.role }).onConflictDoUpdate({ target: [eventMembers.eventId, eventMembers.userId], set: { role: input.role, updatedAt: new Date() } })

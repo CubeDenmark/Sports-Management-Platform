@@ -14,6 +14,8 @@ export default async function Page() {
       </div>
       <nav aria-label="Workspace navigation" className="flex flex-wrap justify-center gap-3">
         {user.role === 'SUPER_ADMIN' && <Link href="/admin" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Open admin</Link>}
+        {user.role === 'EVENT_ADMIN' && <Link href="/admin/events" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Manage my events</Link>}
+        {user.role === 'SCORER' && <Link href="/scorer" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Open scorer desk</Link>}
         <Link href="/live" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Live events</Link>
         <Link href="/scorer" className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted">Scorer workspace</Link>
       </nav>
