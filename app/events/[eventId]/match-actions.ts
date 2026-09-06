@@ -11,7 +11,7 @@ import { hasCourtConflict } from '@/lib/db/repositories/matches'
 const matchSchema = z.object({ eventSportId: z.string().uuid(), homeTeamId: z.string().uuid(), awayTeamId: z.string().uuid(), courtId: z.string().uuid().optional(), scheduledStart: z.coerce.date(), scheduledEnd: z.coerce.date(), stage: z.string().trim().max(120).optional() }).refine((data) => data.scheduledEnd > data.scheduledStart, { message: 'End time must be after start time' })
 
 export async function createMatch(eventId: string, input: unknown) {
-  await requireEventAdmin(eventId)
+  const admin = await requireEventAdmin(eventId)
   const data = matchSchema.parse(input)
   if (data.homeTeamId === data.awayTeamId) throw new Error('Select two different teams')
   const sports = await db.select({ id: eventSports.sportId }).from(eventSports).where(and(eq(eventSports.eventId, eventId), eq(eventSports.sportId, data.eventSportId))).limit(1)
@@ -21,7 +21,12 @@ export async function createMatch(eventId: string, input: unknown) {
   if (data.courtId && await hasCourtConflict(eventId, data.courtId, data.scheduledStart, data.scheduledEnd)) throw new Error('That court is already scheduled during this time')
   const [match] = await db.insert(matches).values({ eventId, eventSportId: data.eventSportId, courtId: data.courtId, scheduledStart: data.scheduledStart, scheduledEnd: data.scheduledEnd, status: 'READY' }).returning()
   await db.insert(matchParticipants).values([{ matchId: match.id, participantKey: 'HOME', teamId: data.homeTeamId }, { matchId: match.id, participantKey: 'AWAY', teamId: data.awayTeamId }])
+  const eventScorers = await db.select({ userId: eventMembers.userId }).from(eventMembers).innerJoin(users, eq(users.id, eventMembers.userId)).where(and(eq(eventMembers.eventId, eventId), eq(eventMembers.role, 'SCORER'), eq(users.role, 'SCORER'), eq(users.isActive, true)))
+  if (eventScorers.length) {
+    await db.insert(matchScorers).values(eventScorers.map(({ userId }) => ({ matchId: match.id, userId, assignedBy: admin.id, status: 'ACTIVE' as const })))
+  }
   revalidatePath(`/events/${eventId}`)
+  revalidatePath('/scorer')
   return match.id
 }
 
