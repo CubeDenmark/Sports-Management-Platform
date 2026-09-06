@@ -6,7 +6,7 @@ export type EventListItem = typeof events.$inferSelect
 
 export async function listEventsForUser(userId: string, isSuperAdmin = false) {
   return db
-    .select({ event: events })
+    .selectDistinct({ event: events })
     .from(events)
     .leftJoin(eventMembers, eq(eventMembers.eventId, events.id))
     .where(isSuperAdmin ? undefined : or(eq(events.createdBy, userId), eq(eventMembers.userId, userId)))
@@ -26,7 +26,7 @@ export async function getEventForUser(eventId: string, userId: string) {
 
 export async function listTeamsForEvent(eventId: string, userId: string) {
   return db
-    .select({ team: teams })
+    .selectDistinct({ team: teams })
     .from(teams)
     .innerJoin(events, eq(events.id, teams.eventId))
     .leftJoin(eventMembers, eq(eventMembers.eventId, events.id))

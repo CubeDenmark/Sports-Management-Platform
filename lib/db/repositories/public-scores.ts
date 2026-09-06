@@ -12,6 +12,12 @@ export async function getPublicEvent(eventId: string) {
   return event
 }
 
+export async function getPublicEventByIdentifier(identifier: string) {
+  const condition = isPublicId(identifier) ? eq(events.id, identifier) : eq(events.slug, identifier)
+  const [event] = await db.select().from(events).where(and(condition, sql`${events.status} <> 'ARCHIVED'`)).limit(1)
+  return event
+}
+
 export async function listPublicMatches(eventId: string) {
   return db.select({ match: matches, sport: sports.name, court: courts.name, homeTeam: sql<string | null>`max(case when ${matchParticipants.participantKey} = 'HOME' then ${teams.name} end)`, awayTeam: sql<string | null>`max(case when ${matchParticipants.participantKey} = 'AWAY' then ${teams.name} end)`, scorer: sql<string | null>`max(${users.displayName})`, homeScore: sql<number>`coalesce(max(case when ${matchParticipants.participantKey} = 'HOME' then ${matchStates.homeScore} end), 0)`, awayScore: sql<number>`coalesce(max(case when ${matchParticipants.participantKey} = 'AWAY' then ${matchStates.awayScore} end), 0)` }).from(matches).innerJoin(eventSports, eq(eventSports.eventId, matches.eventId)).innerJoin(sports, eq(sports.id, eventSports.sportId)).leftJoin(courts, eq(courts.id, matches.courtId)).leftJoin(matchParticipants, eq(matchParticipants.matchId, matches.id)).leftJoin(teams, eq(teams.id, matchParticipants.teamId)).leftJoin(matchStates, eq(matchStates.matchId, matches.id)).leftJoin(matchScorers, and(eq(matchScorers.matchId, matches.id), eq(matchScorers.status, 'ACTIVE'))).leftJoin(users, eq(users.id, matchScorers.userId)).where(eq(matches.eventId, eventId)).groupBy(matches.id, sports.name, courts.name).orderBy(asc(matches.scheduledStart))
 }
