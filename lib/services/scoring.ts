@@ -1,13 +1,13 @@
 import { and, asc, desc, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { eventSports, matchParticipants, matchScorers, matchStates, matches, scoreEvents, sports } from '@/lib/db/schema'
+import { eventMembers, eventSports, matchParticipants, matchScorers, matchStates, matches, scoreEvents, sports, users } from '@/lib/db/schema'
 import { realtimePublisher } from '@/lib/realtime/publisher'
 import { getScoringEngine } from './sport-engines'
 
 export type ScoreAction = { matchId: string; userId: string; clientEventId: string; participantKey: 'HOME' | 'AWAY'; points: number; period: number; sport?: string }
 
 export async function canScoreMatch(matchId: string, userId: string) {
-  const rows = await db.select({ matchId: matchScorers.matchId }).from(matchScorers).innerJoin(matches, eq(matches.id, matchScorers.matchId)).where(and(eq(matchScorers.matchId, matchId), eq(matchScorers.userId, userId), eq(matchScorers.status, 'ACTIVE'))).limit(1)
+  const rows = await db.select({ matchId: matchScorers.matchId }).from(matchScorers).innerJoin(matches, eq(matches.id, matchScorers.matchId)).innerJoin(users, and(eq(users.id, matchScorers.userId), eq(users.role, 'SCORER'), eq(users.isActive, true))).innerJoin(eventMembers, and(eq(eventMembers.eventId, matches.eventId), eq(eventMembers.userId, matchScorers.userId), eq(eventMembers.role, 'SCORER'))).where(and(eq(matchScorers.matchId, matchId), eq(matchScorers.userId, userId), eq(matchScorers.status, 'ACTIVE'))).limit(1)
   return rows.length > 0
 }
 
@@ -56,4 +56,4 @@ async function updateProjection(tx: any, matchId: string, period?: number, statu
 async function getStateForTransaction(tx: any, matchId: string) { const [state] = await tx.select().from(matchStates).where(eq(matchStates.matchId, matchId)).limit(1); return state }
 
 export async function listScoreEvents(matchId: string, userId: string) { if (!(await canScoreMatch(matchId, userId))) throw new Error('Unauthorized'); return db.select().from(scoreEvents).where(eq(scoreEvents.matchId, matchId)).orderBy(desc(scoreEvents.sequenceNumber)) }
-export async function getScoringState(matchId: string, userId: string) { if (!(await canScoreMatch(matchId, userId))) throw new Error('Unauthorized'); const [match] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1); const [sportRow] = await db.select({ slug: sports.slug }).from(matches).innerJoin(eventSports, eq(eventSports.eventId, matches.eventId)).innerJoin(sports, eq(sports.id, eventSports.sportId)).where(eq(matches.id, matchId)).limit(1); const [state] = await db.select().from(matchStates).where(eq(matchStates.matchId, matchId)).limit(1); const events = await db.select().from(scoreEvents).where(eq(scoreEvents.matchId, matchId)).orderBy(desc(scoreEvents.sequenceNumber)); const participants = await db.select().from(matchParticipants).where(eq(matchParticipants.matchId, matchId)); return { match, sport: sportRow?.slug ?? 'basketball', state, events, participants } }
+export async function getScoringState(matchId: string, userId: string) { if (!(await canScoreMatch(matchId, userId))) throw new Error('Unauthorized'); const [match] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1); const [sportRow] = await db.select({ slug: sports.slug }).from(matches).innerJoin(eventSports, and(eq(eventSports.eventId, matches.eventId), eq(eventSports.sportId, matches.eventSportId))).innerJoin(sports, eq(sports.id, eventSports.sportId)).where(eq(matches.id, matchId)).limit(1); const [state] = await db.select().from(matchStates).where(eq(matchStates.matchId, matchId)).limit(1); const events = await db.select().from(scoreEvents).where(eq(scoreEvents.matchId, matchId)).orderBy(desc(scoreEvents.sequenceNumber)); const participants = await db.select().from(matchParticipants).where(eq(matchParticipants.matchId, matchId)); return { match, sport: sportRow?.slug ?? 'basketball', state, events, participants } }

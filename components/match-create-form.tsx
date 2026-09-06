@@ -20,7 +20,8 @@ export function MatchCreateForm({ eventId, sports, teams, courts }: { eventId: s
           homeTeamId: formData.get('homeTeamId'),
           awayTeamId: formData.get('awayTeamId'),
           courtId: formData.get('courtId') || undefined,
-          scheduledStart: formData.get('scheduledStart') || undefined,
+          scheduledStart: formData.get('scheduledStart'),
+          scheduledEnd: formData.get('scheduledEnd'),
         })
         router.refresh()
       } catch (cause) {
@@ -35,7 +36,8 @@ export function MatchCreateForm({ eventId, sports, teams, courts }: { eventId: s
       <select required name="homeTeamId" className="rounded-md border border-border bg-background px-3 py-2 text-sm"><option value="">Home team</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select>
       <select required name="awayTeamId" className="rounded-md border border-border bg-background px-3 py-2 text-sm"><option value="">Away team</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select>
       <select name="courtId" className="rounded-md border border-border bg-background px-3 py-2 text-sm"><option value="">Court</option>{courts.map((court) => <option key={court.id} value={court.id}>{court.name}</option>)}</select>
-      <input required name="scheduledStart" type="datetime-local" className="rounded-md border border-border bg-background px-3 py-2 text-sm" />
+      <label className="grid gap-1 text-xs text-muted-foreground"><span>Start</span><input required name="scheduledStart" type="datetime-local" className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" /></label>
+      <label className="grid gap-1 text-xs text-muted-foreground"><span>End</span><input required name="scheduledEnd" type="datetime-local" className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" /></label>
       <button disabled={isPending} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60">{isPending ? 'Checking availability…' : 'Create match'}</button>
     </form>
     {error && <div role="alertdialog" aria-modal="true" aria-labelledby="schedule-conflict-title" className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4" onClick={() => setError(null)}><section className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-card-foreground shadow-xl" onClick={(event) => event.stopPropagation()}><p className="text-xs font-semibold uppercase tracking-[0.18em] text-destructive">Schedule conflict</p><h3 id="schedule-conflict-title" className="mt-2 text-xl font-semibold">This court is unavailable</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{error}</p><button type="button" autoFocus onClick={() => setError(null)} className="mt-5 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Choose another time or court</button></section></div>}

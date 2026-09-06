@@ -11,8 +11,8 @@ export async function getMatch(matchId: string, eventId?: string) {
   return rows
 }
 
-export async function hasCourtConflict(eventId: string, courtId: string, scheduledStart: Date, excludeId?: string) {
-  const rows = await db.select({ id: matches.id }).from(matches).where(and(eq(matches.eventId, eventId), eq(matches.courtId, courtId), eq(matches.scheduledStart, scheduledStart), ne(matches.status, 'CANCELLED'), excludeId ? ne(matches.id, excludeId) : sql`true`)).limit(1)
+export async function hasCourtConflict(eventId: string, courtId: string, scheduledStart: Date, scheduledEnd: Date, excludeId?: string) {
+  const rows = await db.select({ id: matches.id }).from(matches).where(and(eq(matches.eventId, eventId), eq(matches.courtId, courtId), ne(matches.status, 'CANCELLED'), sql`${matches.scheduledStart} < ${scheduledEnd}`, sql`${matches.scheduledEnd} > ${scheduledStart}`, excludeId ? ne(matches.id, excludeId) : sql`true`)).limit(1)
   return Boolean(rows.length)
 }
 
