@@ -3,6 +3,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return [
+      { source: '/super-admin/dashboard', destination: '/admin' },
+      { source: '/super-admin/events', destination: '/admin/events' },
+      { source: '/super-admin/people', destination: '/admin/users' },
+      { source: '/super-admin/settings', destination: '/admin/settings' },
+    ]
+  },
   async headers() {
     return [
       {

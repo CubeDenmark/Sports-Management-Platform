@@ -24,7 +24,7 @@ export async function requireAdminWorkspace() {
 
 export async function requireEventAdminWorkspace() {
   const user = await requireUser()
-  if (user.role === 'SUPER_ADMIN') redirect('/admin')
+  if (user.role === 'SUPER_ADMIN') redirect('/super-admin/dashboard')
   if (user.role === 'SCORER') redirect('/scorer')
   return user
 }
