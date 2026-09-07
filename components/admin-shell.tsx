@@ -10,7 +10,7 @@ const superAdminNavigation = [
   ['Events', '/admin/events'],
   ['People', '/admin/users'],
 ]
-const eventAdminNavigation = [['Event dashboard', '/event-admin']]
+const eventAdminNavigation = [['Event dashboard', '/event-admin'], ['Event resources', '/event-admin#resources']]
 const tools = [['Scoring desk', '/scorer'], ['Live boards', '/live']]
 const system = [['Settings', '/admin/settings']]
 
