@@ -5,6 +5,6 @@ import { AdminShell } from '@/components/admin-shell'
 export default async function EventAdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireEventAdminWorkspace()
   const eventRows = await listEventsForUser(user.id)
-  const eventId = eventRows[0]?.event.id
-  return <AdminShell user={user} eventId={eventId}>{children}</AdminShell>
+  const events = eventRows.map(({ event }) => ({ id: event.id, name: event.name }))
+  return <AdminShell user={user} events={events}>{children}</AdminShell>
 }
