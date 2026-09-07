@@ -5,14 +5,24 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { logout } from '@/app/logout/actions'
 
-const primary = [
+const superAdminNavigation = [
   ['Overview', '/admin'],
   ['Events', '/admin/events'],
-  ['Schedule', '/admin/schedule'],
+  ['People', '/admin/users'],
 ]
-const resources = [['Teams', '/admin/teams'], ['Players', '/admin/players'], ['Courts', '/admin/courts']]
+const eventAdminNavigation = [
+  ['Event dashboard', '/events'],
+  ['Teams', '/admin/teams'],
+  ['Players', '/admin/players'],
+  ['Courts', '/admin/courts'],
+  ['Matches', '/admin/matches'],
+  ['Schedule', '/admin/schedule'],
+  ['Scorers', '/admin/scorers'],
+  ['Standings', '/admin/standings'],
+  ['Results', '/admin/results'],
+]
 const tools = [['Scoring desk', '/scorer'], ['Live boards', '/live']]
-const system = [['People', '/admin/users'], ['Settings', '/admin/settings']]
+const system = [['Settings', '/admin/settings']]
 
 function NavGroup({ label, items, pathname }: { label: string; items: string[][]; pathname: string }) {
   return <div className="flex flex-col gap-1"><p className="px-3 pb-2 pt-6 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">{label}</p>{items.map(([name, href]) => <Link key={href} href={href} className={`rounded-lg px-3 py-2.5 text-sm transition-colors ${pathname === href || (href !== '/admin' && pathname.startsWith(href)) ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'}`}>{name}</Link>)}</div>
@@ -25,11 +35,11 @@ export function AdminShell({ children, user }: { children: React.ReactNode; user
   return <div className="min-h-screen bg-background text-foreground lg:flex">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 transition-transform lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center gap-3 px-2"><div className="grid size-10 place-items-center rounded-xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">SS</div><div><p className="font-semibold tracking-tight">SportSync</p><p className="text-xs text-sidebar-foreground/60">Event operations</p></div></div>
-      <nav className="mt-4 flex flex-1 flex-col"><NavGroup label="Workspace" items={primary} pathname={pathname}/><NavGroup label="Event resources" items={resources} pathname={pathname}/><NavGroup label="Live tools" items={tools} pathname={pathname}/><NavGroup label="System" items={system} pathname={pathname}/></nav>
+      <nav className="mt-4 flex flex-1 flex-col">{user.role === 'SUPER_ADMIN' ? <NavGroup label="Platform" items={superAdminNavigation} pathname={pathname}/> : <NavGroup label="Event operations" items={eventAdminNavigation} pathname={pathname}/>}<NavGroup label="Live tools" items={tools} pathname={pathname}/><NavGroup label="System" items={system} pathname={pathname}/></nav>
       <form action={logout} className="border-t border-sidebar-border pt-4"><button className="w-full rounded-lg px-3 py-2 text-left text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" type="submit">Sign out</button></form>
     </aside>
     {open && <button aria-label="Close navigation" className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setOpen(false)} />}
-    <section className="min-w-0 flex-1"><header className="flex h-20 items-center justify-between border-b border-border px-5 lg:px-8"><div className="flex items-center gap-3"><button aria-label="Open navigation" className="rounded-md border border-border px-3 py-2 text-sm lg:hidden" onClick={() => setOpen(true)}>Menu</button><div><p className="text-xs text-muted-foreground">Saturday, March 15, 2025</p><h1 className="text-lg font-semibold">Good morning, {user.displayName.split(' ')[0]}</h1></div></div><div className="flex items-center gap-3"><span className="hidden rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground sm:inline-flex">{user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Event Admin'}</span><span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-semibold">{initials}</span></div></header><main className="mx-auto max-w-[1440px] p-5 lg:p-8">{children}</main></section>
+    <section className="min-w-0 flex-1"><header className="flex h-20 items-center justify-between border-b border-border px-5 lg:px-8"><div className="flex items-center gap-3"><button aria-label="Open navigation" className="rounded-md border border-border px-3 py-2 text-sm lg:hidden" onClick={() => setOpen(true)}>Menu</button><div><p className="text-xs text-muted-foreground">{user.role === 'SUPER_ADMIN' ? 'Platform administration' : 'Event operations'}</p><h1 className="text-lg font-semibold">Good morning, {user.displayName.split(' ')[0]}</h1></div></div><div className="flex items-center gap-3"><span className="hidden rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground sm:inline-flex">{user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Event Admin'}</span><span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-semibold">{initials}</span></div></header><main className="mx-auto max-w-[1440px] p-5 lg:p-8">{children}</main></section>
   </div>
 }
 
