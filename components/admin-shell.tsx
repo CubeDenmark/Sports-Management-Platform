@@ -11,7 +11,7 @@ const superAdminNavigation = [
   ['People', '/admin/users'],
 ]
 const eventAdminNavigation = [
-  ['Event dashboard', '/events'],
+  ['Event dashboard', '/event-admin'],
   ['Teams', '/admin/teams'],
   ['Players', '/admin/players'],
   ['Courts', '/admin/courts'],

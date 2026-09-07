@@ -1,9 +1,9 @@
 'use server'
 
-import { and, eq, or } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
-import { eventMembers, events, users } from '@/lib/db/schema'
+import { users } from '@/lib/db/schema'
 import { createSession, verifyPassword } from '@/lib/auth'
 
 export type LoginState = { error?: string }
@@ -22,13 +22,5 @@ export async function login(_state: LoginState, formData: FormData): Promise<Log
   if (user.role === 'SUPER_ADMIN') redirect('/admin')
   if (user.role === 'SCORER') redirect('/scorer')
 
-  const assignedEvents = await db
-    .selectDistinct({ id: events.id, createdAt: events.createdAt })
-    .from(events)
-    .leftJoin(eventMembers, eq(eventMembers.eventId, events.id))
-    .where(or(eq(events.createdBy, user.id), and(eq(eventMembers.userId, user.id), eq(eventMembers.role, 'EVENT_ADMIN'))))
-    .orderBy(events.createdAt)
-
-  if (assignedEvents.length === 1) redirect(`/events/${assignedEvents[0].id}`)
-  redirect('/admin/schedule')
+  redirect('/event-admin')
 }
