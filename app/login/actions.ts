@@ -23,7 +23,7 @@ export async function login(_state: LoginState, formData: FormData): Promise<Log
   if (user.role === 'SCORER') redirect('/scorer')
 
   const assignedEvents = await db
-    .selectDistinct({ id: events.id })
+    .selectDistinct({ id: events.id, createdAt: events.createdAt })
     .from(events)
     .leftJoin(eventMembers, eq(eventMembers.eventId, events.id))
     .where(or(eq(events.createdBy, user.id), and(eq(eventMembers.userId, user.id), eq(eventMembers.role, 'EVENT_ADMIN'))))
