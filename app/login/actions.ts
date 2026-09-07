@@ -22,5 +22,5 @@ export async function login(_state: LoginState, formData: FormData): Promise<Log
   if (user.role === 'SUPER_ADMIN') redirect('/admin')
   if (user.role === 'SCORER') redirect('/scorer')
 
-  redirect('/event-admin')
+  redirect('/admin')
 }
