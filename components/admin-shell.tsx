@@ -6,12 +6,12 @@ import { useState } from 'react'
 import { logout } from '@/app/logout/actions'
 
 const superAdminNavigation = [
-  ['Overview', '/admin'],
+  ['Dashboard', '/admin'],
   ['Events', '/admin/events'],
   ['People', '/admin/users'],
 ]
-const eventAdminNavigation = (eventId?: string) => eventId ? [['Event dashboard', '/event-admin'], ['Overview', `/admin/events/${eventId}/overview`], ['Sports', `/admin/events/${eventId}/sports`], ['Teams', `/admin/events/${eventId}/teams`], ['Players', `/admin/events/${eventId}/players`], ['Courts', `/admin/events/${eventId}/courts`], ['Matches', `/admin/events/${eventId}/matches`], ['Schedule', `/admin/events/${eventId}/schedule`], ['Scorers', `/admin/events/${eventId}/scorers`], ['Results', `/admin/events/${eventId}/results`], ['Settings', `/admin/events/${eventId}/settings`]] : [['Event dashboard', '/event-admin']]
-const tools = [['Scoring desk', '/scorer'], ['Live boards', '/live']]
+const eventAdminNavigation = (eventId?: string) => eventId ? [['Dashboard', `/admin/events/${eventId}`], ['Overview', `/admin/events/${eventId}/overview`], ['Sports', `/admin/events/${eventId}/sports`], ['Teams', `/admin/events/${eventId}/teams`], ['Players', `/admin/events/${eventId}/players`], ['Courts', `/admin/events/${eventId}/courts`], ['Matches', `/admin/events/${eventId}/matches`], ['Schedule', `/admin/events/${eventId}/schedule`], ['Scorers', `/admin/events/${eventId}/scorers`], ['Standings', `/admin/events/${eventId}/results`], ['Results', `/admin/events/${eventId}/results`], ['Settings', `/admin/events/${eventId}/settings`]] : []
+const scorerNavigation = [['My Matches', '/scorer']]
 const system = [['Settings', '/admin/settings']]
 
 function NavGroup({ label, items, pathname }: { label: string; items: string[][]; pathname: string }) {
@@ -25,7 +25,7 @@ export function AdminShell({ children, user, eventId }: { children: React.ReactN
   return <div className="min-h-screen bg-background text-foreground lg:flex">
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 transition-transform lg:static lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex items-center gap-3 px-2"><div className="grid size-10 place-items-center rounded-xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">SS</div><div><p className="font-semibold tracking-tight">SportSync</p><p className="text-xs text-sidebar-foreground/60">Event operations</p></div></div>
-      <nav className="mt-4 flex flex-1 flex-col">{user.role === 'SUPER_ADMIN' ? <NavGroup label="Platform" items={superAdminNavigation} pathname={pathname}/> : <NavGroup label="Event operations" items={eventAdminNavigation(eventId)} pathname={pathname}/>}<NavGroup label="Live tools" items={tools} pathname={pathname}/>{user.role === 'SUPER_ADMIN' && <NavGroup label="System" items={system} pathname={pathname}/>}</nav>
+      <nav className="mt-4 flex flex-1 flex-col">{user.role === 'SUPER_ADMIN' ? <><NavGroup label="Platform" items={superAdminNavigation} pathname={pathname}/><NavGroup label="System" items={system} pathname={pathname}/></> : user.role === 'EVENT_ADMIN' ? <NavGroup label="Event operations" items={eventAdminNavigation(eventId)} pathname={pathname}/> : <NavGroup label="Scorer" items={scorerNavigation} pathname={pathname}/>}</nav>
       <form action={logout} className="border-t border-sidebar-border pt-4"><button className="w-full rounded-lg px-3 py-2 text-left text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground" type="submit">Sign out</button></form>
     </aside>
     {open && <button aria-label="Close navigation" className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setOpen(false)} />}
