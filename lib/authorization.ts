@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { db } from '@/lib/db'
-import { eventMembers, events } from '@/lib/db/schema'
+import { eventMembers, events, users } from '@/lib/db/schema'
 import { getCurrentUser } from '@/lib/auth'
 
 export async function requireUser() {
@@ -22,16 +22,24 @@ export async function requireAdminWorkspace() {
   return user
 }
 
+export async function requireEventAdminWorkspace() {
+  const user = await requireUser()
+  if (user.role === 'SUPER_ADMIN') redirect('/admin')
+  if (user.role === 'SCORER') redirect('/scorer')
+  return user
+}
+
 export async function requirePlatformAdmin() {
   const user = await requireUser()
-  if (user.role !== 'SUPER_ADMIN') redirect('/admin')
+  if (user.role !== 'SUPER_ADMIN') redirect('/event-admin')
   return user
 }
 
 export async function requireEventAdmin(eventId: string) {
   const user = await requireUser()
   if (user.role === 'SUPER_ADMIN') return user
-  const rows = await db.select({ id: events.id }).from(events).leftJoin(eventMembers, eq(eventMembers.eventId, events.id)).where(and(eq(events.id, eventId), sql`(${events.createdBy} = ${user.id} OR (${eventMembers.userId} = ${user.id} AND ${eventMembers.role} = 'EVENT_ADMIN'))`)).limit(1)
+  if (user.role !== 'EVENT_ADMIN') redirect('/scorer')
+  const rows = await db.select({ id: events.id }).from(events).innerJoin(eventMembers, eq(eventMembers.eventId, events.id)).innerJoin(users, eq(users.id, eventMembers.userId)).where(and(eq(events.id, eventId), eq(eventMembers.userId, user.id), eq(eventMembers.role, 'EVENT_ADMIN'), eq(users.isActive, true))).limit(1)
   if (!rows[0]) redirect('/')
   return user
 }

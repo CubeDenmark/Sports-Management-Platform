@@ -2,12 +2,12 @@ import { AdminDestination } from '@/components/admin-destination'
 import { db } from '@/lib/db'
 import { events, teams } from '@/lib/db/schema'
 import { desc, eq } from 'drizzle-orm'
-import { requireUser } from '@/lib/authorization'
+import { requireSuperAdmin } from '@/lib/authorization'
 import { createTeam, deleteTeam } from '@/app/admin/resource-actions'
 import Link from 'next/link'
 
 export default async function TeamsPage({ searchParams }: { searchParams: Promise<{ eventId?: string }> }) {
-  const user = await requireUser()
+  const user = await requireSuperAdmin()
   const eventRows = await db.select({ id: events.id, name: events.name }).from(events).orderBy(desc(events.createdAt))
   const selectedEventId = (await searchParams).eventId
   const eventId = eventRows.some((event) => event.id === selectedEventId) ? selectedEventId : eventRows[0]?.id
